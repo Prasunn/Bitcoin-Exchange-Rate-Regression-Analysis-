@@ -1,0 +1,342 @@
+---
+output:
+  html_document: default
+  word_document: default
+---
+
+##Project title:Bitcoin  Historical price  Regression Analysis
+##College: BMSIT
+##Email: pmprasunn457@gmail.com
+
+##Introduction:
+  A cryptocurrency (or crypto currency) is a digital asset designed to work as a medium of exchange that uses cryptography to secure its transactions, to control the creation of additional units, and to verify the transfer of assets. Cryptocurrencies are classified as a subset of digital currencies and are also classified as a subset of alternative currencies and virtual currencies. Cryptocurrencies use decentralized control as opposed to centralized electronic money and central banking systems. The decentralized control of each cryptocurrency works through a blockchain, which is a public transaction database, functioning as a distributed ledger.
+  
+##BITCOIN:
+
+  Bittcoin is a cryptocurrency and worldwide payment system. It is the first decentralized digital currency, as the system works without a central bank or single administrator. The network is peer-to-peer and transactions take place between users directly, without an intermediary. These transactions are verified by network nodes through the use of cryptography and recorded in a public distributed ledger called a blockchain. Bitcoin was invented by an unknown person or group of people under the name Satoshi Nakamoto and released as open-source software in 2009.
+  Bitcoins are created as a reward for a process known as mining. They can be exchanged for other currencies, products, and services. As of February 2015, over 100,000 merchants and vendors accepted bitcoin as payment. Research produced by the University of Cambridge estimates that in 2017, there are 2.9 to 5.8 million unique users using a cryptocurrency wallet, most of them using bitcoin.
+  
+##Overview of the Study:
+
+It is common for people to say they are "investing" in Bitcoin, but what essentially that person is doing is betting on the increased adoption of Bitcoin. Why is this true? Bitcoin has no physical value. The USD for example is backed by the US Government and as the world's reserve currency. The value of BTC is merely based on the law of supply and demand. This is interesting because unlike paper currency BTC has a cap on the amount of coins that can be produced, 21 million, which is usually deemed a positive. This carries significance because governments continue to put more currency into circulation which in turn devalues it over time. Due to the supply being limited to 21 million, as demand increases the value will likely increase. Hypothetically, let's say the United States were to adopt BTC as its currency. In 2013 there were approximately 1.2 trillion USD in circulation, M1, plus all the money in accounts less than 100k USD, referred to as M2 (Clark and Whitbourne). Along with that information, there will ultimately be 21 million BTC in circulation.
+
+##USD per Bitcoin if all bitcoin is mined 
+```{r}
+USD=1610000000000 # 1.61 Trillion USD in circulation
+Bitcoin=21000000   # 21 Million Bitcoin (Most Bitcoin that will be in Circulation)
+Value=USD/Bitcoin  # Value of Bitcoin compared to current dollar
+cat("Value=",Value)
+```
+
+##Bitcoin Data Insights
+1.Reading the BITCOIN Data Set
+```{r}
+setwd("~/")#Setting the working directory 
+#reading the file
+BTC <- read.csv(paste("bitcoin_dataset.csv", sep=" "))
+```
+##Summary of the BItcoin Data set
+```{r}
+library(psych)
+summary(BTC)
+str(BTC)
+describe(BTC)
+View(BTC)
+```
+```{r}
+BTC$Days <- 1:nrow(BTC) #Add column that adds a count of days for each row
+BTC$Date <- as.Date(BTC$Date) #Format Date as Date
+BTC2 <- subset(BTC, BTC$btc_median_confirmation_time>0) #Subset of data that is clean
+```
+
+##Historical Bitcoin Value
+```{r}
+library(ggplot2)
+ggplot(BTC, aes(BTC$Date, BTC$btc_market_price)) + 
+  geom_point(color="firebrick") +
+  ggtitle('BTC Value vs. Time') +
+  theme(plot.title = element_text(size=20, face="bold", 
+    margin = margin(10, 0, 10, 0)))+
+  labs(x="Date", y="USD")+
+  theme(axis.text.x=element_text(angle=50, vjust=0.5)) +
+  theme(panel.background = element_rect(fill = 'grey75'))
+```
+From the graph we can see that the value of bitcoin with respect to dollar has increased exponentially.
+
+##Correlation between variables 
+```{r}
+BTC<-na.omit(BTC)
+library(corrplot)
+cor <- cor(BTC[,2:12])
+#corrplot
+corrplot(cor, method = "pie")
+#Bitcoin date vs market price
+plot(BTC$Date, BTC$btc_market_price)
+#Bitcoin market price vs market cap
+mod<-lm(btc_market_price~btc_market_cap, data=BTC)
+mod1<-lm(btc_market_price~btc_estimated_transaction_volume_usd, data=BTC)
+summary(mod)
+summary(mod1)
+plot(BTC$btc_market_price,BTC$btc_market_cap)
+plot(BTC$btc_market_price,BTC$btc_estimated_transaction_volume_usd)
+
+```
+
+##Market Price Vs Miners Revenue
+```{r}
+ggplot(BTC2, aes(BTC2$btc_miners_revenue/1000000, BTC2$btc_market_price)) + 
+  geom_point(color="firebrick") +
+  ggtitle('BTC Miners Revenue vs. Market Price') +
+  theme(plot.title = element_text(size=19.5, face="bold", 
+    margin = margin(10, 0, 10, 0)))+
+  labs(x="Miners Revenue MM (USD)", y="Market Price (USD)")+
+  theme(axis.text.x=element_text(angle=90, vjust=0.5)) +
+  theme(panel.background = element_rect(fill = 'grey75'))+
+  stat_smooth(method = "lm",  formula = y ~ poly(x,2), col = "yellow")
+```
+
+##Difficulty vs. Market Price
+```{r}
+ggplot(BTC2, aes(BTC2$btc_difficulty/1000000000, BTC2$btc_market_price)) + 
+  geom_point(color="firebrick") +
+  ggtitle('BTC Difficulty vs. Market Price') +
+  theme(plot.title = element_text(size=19.5, face="bold", 
+    margin = margin(10, 0, 10, 0)))+
+  labs(x="Block Find Difficulty (Billions)", y="Market Price (USD)")+
+  theme(axis.text.x=element_text(angle=90, vjust=0.5)) +
+  theme(panel.background = element_rect(fill = 'grey75'))+
+  stat_smooth(method = "lm",  formula = y ~ poly(x,2), col = "yellow")
+```
+
+##Hash Rate vs. Market Price
+```{r}
+ggplot(BTC2, aes(BTC2$btc_hash_rate/1000000, BTC2$btc_market_price)) + 
+  geom_point(color="firebrick") +
+  ggtitle('BTC Hash Rate vs. Market Price') +
+  theme(plot.title = element_text(size=19.5, face="bold", 
+    margin = margin(10, 0, 10, 0)))+
+  labs(x="Hash Rate (Millions)", y="Market Price (USD)")+
+  theme(axis.text.x=element_text(angle=90, vjust=0.5)) +
+  theme(panel.background = element_rect(fill = 'grey75'))+
+  stat_smooth(method = "lm",  formula = y ~ poly(x,2), col = "yellow")
+```
+
+##Loading Library's 
+```{r}
+library(knitr)
+library(pander)
+library(tidyverse)
+library(broom)
+library(DataCombine)
+library(caret)
+```
+
+##Summary of Regression Model
+```{r}
+lmfit1<-lm(BTC2$btc_market_price~BTC2$btc_market_cap)
+panderOptions("digits", 2)
+pander(lmfit1, caption = "Linear Model: Market Price ~ Market Capitalization")
+R1=summary(lmfit1)$r.squared
+cat("R-Squared = ", R1)
+```
+
+Market Capitalization is signficant to Market Price.
+
+##Residuals
+```{r}
+plot(lmfit1, pch=16, which=1)
+```
+##Estimated USD Transaction Volume vs. Market Price
+```{r}
+ggplot(BTC2, aes(BTC2$btc_estimated_transaction_volume_usd/1000000, BTC2$btc_market_price)) + 
+  geom_point(color="red") +
+  ggtitle('BTC Transaction Volume vs. Market Price') +
+  theme(plot.title = element_text(size=19.5, face="bold", 
+    margin = margin(10, 0, 10, 0)))+
+  labs(x="Transaction Volume MM (USD)", y="Market Price (USD)")+
+  theme(axis.text.x=element_text(angle=90, vjust=0.5)) +
+  theme(panel.background = element_rect(fill = 'grey75'))+
+  stat_smooth(method = "lm",  formula = y ~ poly(x,2), col = "white")
+
+lmfit2<-lm(BTC2$btc_market_price~poly(BTC2$btc_estimated_transaction_volume_usd,2))
+panderOptions("digits", 2)
+pander(lmfit2, caption = "Linear Model: Market Price ~ Estimated Transaction Volume (USD) Squared")
+R2=summary(lmfit2)$r.squared
+cat("R-Squared = ", R2)
+```
+Transaction volume is significant to market price 
+##Residuals
+```{r}
+plot(lmfit2, pch=16, which=1)
+```
+the price increases the variability increases
+##Regression  model
+```{r}
+lmfit7 <- lm(BTC2$btc_market_price ~ poly(BTC2$btc_estimated_transaction_volume_usd, 2) + poly(BTC2$btc_miners_revenue, degree=2))
+
+panderOptions("digits", 2)
+pander(lmfit7, caption = "Linear Model: Market Price ~ Miners Revenue Squared + Count of Transactions Squared")
+
+R7=summary(lmfit7)$r.squared
+cat("R-Squared = ", R7)
+```
+
+##Percentage Change
+```{r}
+BTC<-mutate(BTC, pChange=(BTC$btc_market_price-lag(BTC$btc_market_price))/lag(BTC$btc_market_price)*100) #Add column for percentage of change
+
+ggplot(BTC, aes(BTC$Date, BTC$pChange)) + 
+  geom_point(color="firebrick") +
+  ggtitle('BTC Percent Change vs. Time') +
+  theme(plot.title = element_text(size=20, face="bold", 
+    margin = margin(10, 0, 10, 0)))+
+  labs(x="Date", y="Pct. Change")+
+  theme(axis.text.x=element_text(angle=50, vjust=0.5)) +
+  theme(panel.background = element_rect(fill = 'grey75'))
+```
+##Mutate Data in Percent Change
+```{R}
+library(zoo)
+
+BTC2$AVGtransactionvolume<-BTC2$btc_estimated_transaction_volume_usd
+BTC2$AVGminersrevenue<-BTC2$btc_miners_revenue
+BTC2$AVGmarketcap<-BTC2$btc_market_cap
+BTC2$pctChange<-BTC2$btc_market_price
+BTC2$AVGtotalbitcoins<-BTC2$btc_total_bitcoins
+
+BTC11<- subset(BTC2, BTC2$AVGminersrevenue>0)
+BTC11<-mutate(BTC11, pctChange=(BTC2$btc_market_price-lag(BTC2$btc_market_price))/lag(BTC2$btc_market_price)*100)
+BTC11<-mutate(BTC11, AVGtransactionvolume=(BTC2$AVGtransactionvolume-lag(BTC2$AVGtransactionvolume))/lag(BTC2$AVGtransactionvolume)*100)
+BTC11<-mutate(BTC11, AVGminersrevenue=(BTC2$AVGminersrevenue-lag(BTC2$AVGminersrevenue))/lag(BTC2$AVGminersrevenue)*100)
+BTC11<-mutate(BTC11, AVGmarketcap=(BTC2$AVGmarketcap-lag(BTC2$AVGmarketcap))/lag(BTC2$AVGmarketcap)*100)
+BTC11<-mutate(BTC11, AVGtotalbitcoins=(BTC2$AVGtotalbitcoins-lag(BTC2$AVGtotalbitcoins))/lag(BTC2$AVGtotalbitcoins)*100)
+
+ggplot(BTC2, aes(BTC11$Date, BTC11$pctChange)) + 
+  geom_point(color="firebrick") +
+  ggtitle('BTC Percent Change vs. Time') +
+  theme(plot.title = element_text(size=20, face="bold", 
+    margin = margin(10, 0, 10, 0)))+
+  labs(x="Date", y="Pct. Change")+
+  theme(axis.text.x=element_text(angle=50, vjust=0.5)) +
+  theme(panel.background = element_rect(fill = 'grey75'))
+```
+##Correlation Analysis of Transformed Variables
+```{r}
+cor2 <- cor(BTC11[c(2:2167),c(26:30)]) #selecting variables to include in correlation analysis
+
+colnames(cor2) <- c("% Change Transx Volume", "% Change Miner Rev.","% Change Market Cap", "% Change Market Price","Change Total Coins")
+rownames(cor2) <- c("% Change Transx Volume", "% Change Miner Rev.","% Change Market Cap","% Change Market Price", "Change Total Coins")
+
+corrplot(cor2, method = "circle",  tl.srt = 50, tl.col = "black", tl.cex = 0.6, title = "Correlation of Variables", mar=c(0,0,1,0))
+```
+##What is the significance of these variables to the percent change in market price?
+```{R}
+lmfit8 <- lm(pctChange ~ AVGmarketcap+AVGtotalbitcoins, BTC11)
+
+panderOptions("digits", 2)
+pander(lmfit8, caption = "Linear Model: Market Price Change ~ Market Cap Change + Total Coins Change")
+```
+
+##T-Test
+```{r}
+t.test(BTC$btc_market_price,BTC$btc_market_cap)
+t.test(BTC$btc_market_price,BTC$btc_total_bitcoins)
+t.test(BTC$btc_miners_revenue,BTC$btc_hash_rate)
+t.test(BTC$btc_difficulty,BTC$btc_market_price)
+
+```
+##Train Model and Test Percent Change
+##Creating the training subset and test subset
+```{R}
+set.seed(1)
+train2.index<-sample(1:nrow(BTC11),0.90*nrow(BTC11), replace=FALSE)
+train2 <- BTC11[train2.index, ]
+test2  <- BTC11[-train2.index,]
+```
+##Training and testing
+```{R}
+lmtrain2 <- lm(pctChange~AVGmarketcap+AVGtotalbitcoins, train2)
+test2$p1 <- predict(lmtrain2,test2)
+error=mean(abs(test2$p1-test2$pctChange))
+cat("Mean Error = ", error)
+```
+Very small amount of error.
+```{R}
+ggplot(test2, aes(test2$Date)) + 
+  geom_point(aes(y=test2$pctChange),color="Firebrick") +
+  geom_line(aes(y=test2$p1), color="Blue")+
+  ggtitle('') +
+  theme(plot.title = element_text(size=10, face="bold", 
+    margin = margin(10, 0, 10, 0)))+
+  labs(x="Time", y="Percent Change in Value")+
+  theme(axis.text.x=element_text(angle=90, vjust=0.5)) +
+  theme(panel.background = element_rect(fill = 'grey75'))+
+  labs(title = paste("BTC Market Price % Change ~ BTC Market Cap % Change + Total Coins % Change",
+                     "\n\nAdj R2 = ",signif(summary(lmtrain2)$adj.r.squared, 5),
+                     " P =",signif(summary(lmtrain2)$coef[2,4], 2)))
+```
+
+
+##Conclusion
+
+It's difficult to predict the price of bitcoin due to fluctuatuion in market
+Shown above, percent change in the value of Bitcoin is highly dependent to the percent change in market capitalization and percent change in total bitcoins in circulation.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
